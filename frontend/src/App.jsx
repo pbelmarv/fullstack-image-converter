@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import "./App.css";
 import axios from "axios";
+import { useDropzone } from "react-dropzone";
 import "tailwindcss/tailwind.css";
 
 function App() {
@@ -9,10 +10,20 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [format, setFormat] = useState("avif");
 
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
+    const onDrop = useCallback((acceptedFiles) => {
+        setSelectedFile(acceptedFiles[0]);
         setCOnvertedImage(null);
-    };
+    }, []);
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        accept: "image/*",
+    });
+
+    // const handleFileChange = (event) => {
+    //     setSelectedFile(event.target.files[0]);
+    //     setCOnvertedImage(null);
+    // };
 
     const handleFormatChange = (event) => {
         setFormat(event.target.value);
@@ -47,21 +58,51 @@ function App() {
         }
     };
 
+    const handleRemoveFile = () => {
+        setSelectedFile(false);
+    };
+
     return (
-        <div className="nim-h-screen bg-gray-100 flex flex-col items-center justify-center">
+        <div className="nim-h-screen bg-gray-100 flex flex-col items-center justify-center py-16 rounded-lg shadow-lg">
             <h1 className="text-3xl font-bold mb-4">Convertir Imagen</h1>
             <form onSubmit={handleSubmit} className="w-full max-w-sm">
-                <div className="mb-4">
-                    <input
-                        type="file"
-                        onChange={handleFileChange}
-                        className="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 cursor-pointer focus:outline-none"
-                    />
+                <div
+                    {...getRootProps()}
+                    className="mb-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer focus:outline-none py-6 px-4"
+                >
+                    <input {...getInputProps()} />
+                    {isDragActive ? (
+                        <p className="text-center text-gray-500">
+                            Suelta la imagen aqui...
+                        </p>
+                    ) : (
+                        <p className="text-center text-gray-500">
+                            Arrastra y suelta una imagen aqui, o haz click para
+                            seleccionar una.
+                        </p>
+                    )}
                 </div>
-                <div className="mb-4">
+                {selectedFile && (
+                    <div className="mb-4 text-center">
+                        <img
+                            src={URL.createObjectURL(selectedFile)}
+                            alt="Preview"
+                            className="mx-auto mb-4 max-h-48 object-cover"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleRemoveFile}
+                            className=" bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                        >
+                            Eliminar Imagen
+                        </button>
+                    </div>
+                )}
+                <div><hr /></div>
+                <div className="mb-4 py-8">
                     <label
                         htmlFor="format"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-lg font-medium text-gray-700"
                     >
                         Formato de salida
                     </label>
@@ -109,7 +150,7 @@ function App() {
                         download={`converted-image.${format}`}
                     >
                         <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                            Descargar Imagen
+                            Descargar Imagen .{format}
                         </button>
                     </a>
                 </div>
